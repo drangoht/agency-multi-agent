@@ -19,11 +19,11 @@ builder.Services.AddSingleton<IConversationStore, InMemoryConversationStore>();
 builder.Services.Configure<OllamaSettings>(builder.Configuration.GetSection("Ollama"));
 builder.Services.AddHttpClient<IOllamaClient, OllamaClient>();
 
-// Agents
-builder.Services.AddTransient<DeveloperAgent>();
-builder.Services.AddTransient<ProductManagerAgent>();
-builder.Services.AddTransient<TesterAgent>();
-builder.Services.AddTransient<ReleaseManagerAgent>();
+// Agents (register as IAgent so SimpleOrchestrator can resolve IEnumerable<IAgent>)
+builder.Services.AddTransient<IAgent, DeveloperAgent>();
+builder.Services.AddTransient<IAgent, ProductManagerAgent>();
+builder.Services.AddTransient<IAgent, TesterAgent>();
+builder.Services.AddTransient<IAgent, ReleaseManagerAgent>();
 
 // Orchestrator and CORS
 builder.Services.AddSingleton<IAgentOrchestrator, SimpleOrchestrator>();
