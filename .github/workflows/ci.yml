@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-$(echo "$(for file in $(git ls-files '*.csproj'); do cat $file; done)" | sha1sum | cut -d' ' -f1)
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test (with coverage)
+        run: |
+          # write coverage into each test project's coverage folder (coverlet default behavior)
+          dotnet test --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: "**/coverage/*.xml"
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Summarize coverage and comment on PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=( $(ls **/coverage/*.xml 2>/dev/null || true) )
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No coverage files found"
+            exit 0
+          fi
+          total_covered=0
+          total_valid=0
+          for f in "${files[@]}"; do
+            # Extract attributes lines-covered and lines-valid from cobertura root element
+            covered=$(xmllint --xpath 'string(/*/@lines-covered)' "$f" 2>/dev/null || echo 0)
+            valid=$(xmllint --xpath 'string(/*/@lines-valid)' "$f" 2>/dev/null || echo 0)
+            covered=${covered:-0}
+            valid=${valid:-0}
+            total_covered=$((total_covered + covered))
+            total_valid=$((total_valid + valid))
+          done
+          if [ "$total_valid" -gt 0 ]; then
+            pct=$(awk "BEGIN { printf \"%.2f\", ($total_covered / $total_valid * 100) }")
+          else
+            pct="0.00"
+          fi
+          body="**Code coverage**: $pct% ($total_covered/$total_valid lines)\n\nFiles:\n$(printf '%s\n' "${files[@]}")"
+          echo "$body" > coverage_comment.txt
+          PR_NUM=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          if [ "$PR_NUM" != "null" ]; then
+            curl -s -S -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" \
+              -X POST -d "{\"body\": $(jq -Rs . < coverage_comment.txt)}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUM/comments"
+          else
+            echo "No pull_request number found in event payload"
+          fi

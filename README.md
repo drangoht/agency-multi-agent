@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![codecov](https://codecov.io/gh/drangoht/agency-multi-agent/branch/master/graph/badge.svg)](https://codecov.io/gh/drangoht/agency-multi-agent)
 
 ---
 
