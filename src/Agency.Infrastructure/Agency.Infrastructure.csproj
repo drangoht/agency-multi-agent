@@ -8,4 +8,8 @@
     <ProjectReference Include="..\Agency.Domain\Agency.Domain.csproj" />
     <ProjectReference Include="..\Agency.Application\Agency.Application.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.9" />
+    <PackageReference Include="System.Net.Http.Json" Version="9.0.9" />
+  </ItemGroup>
 </Project>

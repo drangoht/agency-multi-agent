@@ -1,13 +1,11 @@
-using Agency.Application.Interfaces;
-using Agency.Domain.Models;
-namespace Agency.Infrastructure.Agents;
-public class ReleaseManagerAgent : AgentBase
+namespace Agency.Infrastructure.Agents
 {
-    public ReleaseManagerAgent(string id = "rel", string? parent = "pm") : base(id, "ReleaseManager", parent) {}
-    public override Task<AgentMessage?> HandleAsync(IEnumerable<AgentMessage> conversation, string? instruction = null, CancellationToken cancellationToken = default)
+    public class ReleaseManagerAgent : LLMAgentBase
     {
-        var content = "Release manager prepares release notes and deployment steps (docker image, compose).";
-        var msg = new AgentMessage(Descriptor.Id, Descriptor.Role, content, DateTime.UtcNow);
-        return Task.FromResult<AgentMessage?>(msg);
+        protected override string SystemPrompt =>
+            "Tu es un Release Manager. Vérifie que la release est stable, documentée et prête à être déployée.";
+
+        public ReleaseManagerAgent(IHttpClientFactory factory)
+            : base(factory, "rm", "ReleaseManager") { }
     }
 }
