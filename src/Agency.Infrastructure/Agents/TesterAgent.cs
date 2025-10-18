@@ -1,13 +1,11 @@
-using Agency.Application.Interfaces;
-using Agency.Domain.Models;
-namespace Agency.Infrastructure.Agents;
-public class TesterAgent : AgentBase
+namespace Agency.Infrastructure.Agents
 {
-    public TesterAgent(string id = "tester", string? parent = "dev") : base(id, "Tester", parent) {}
-    public override Task<AgentMessage?> HandleAsync(IEnumerable<AgentMessage> conversation, string? instruction = null, CancellationToken cancellationToken = default)
+    public class TesterAgent : LLMAgentBase
     {
-        var content = "Tester creates a unit test to validate HelloWorld endpoint returns expected text.";
-        var msg = new AgentMessage(Descriptor.Id, Descriptor.Role, content, DateTime.UtcNow);
-        return Task.FromResult<AgentMessage?>(msg);
+        protected override string SystemPrompt =>
+            "Tu es un testeur QA. Rédige des tests unitaires et d’intégration pertinents pour valider les comportements du code.";
+
+        public TesterAgent(IHttpClientFactory factory)
+            : base(factory, "qa", "Tester") { }
     }
 }

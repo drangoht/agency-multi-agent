@@ -1,15 +1,34 @@
 using Agency.Application.Interfaces;
+using Application.Interfaces;
 using Agency.Domain.Models;
-namespace Agency.Infrastructure.Agents;
-public class DeveloperAgent : AgentBase
+using System.Text;
+
+namespace Agency.Infrastructure.Agents
 {
-    public DeveloperAgent(string id = "dev", string? parent = "pm") : base(id, "Developer", parent) {}
-    public override Task<AgentMessage?> HandleAsync(IEnumerable<AgentMessage> conversation, string? instruction = null, CancellationToken cancellationToken = default)
+    public class DeveloperAgent : AgentBase
     {
-        var content = instruction is null
-            ? "Developer implements: minimal API controller with a HelloWorld endpoint."
-            : $"Developer implements: {instruction}";
-        var msg = new AgentMessage(Descriptor.Id, Descriptor.Role, content, DateTime.UtcNow);
-        return Task.FromResult<AgentMessage?>(msg);
+        private readonly IOllamaClient _ollama;
+
+        public DeveloperAgent(IOllamaClient ollama)
+            : base("dev", "Developer")
+        {
+            _ollama = ollama;
+        }
+
+        public override async Task<AgentMessage?> HandleAsync(IEnumerable<AgentMessage> conversation, string? instruction = null, CancellationToken cancellationToken = default)
+        {
+            var sb = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(instruction))
+            {
+                sb.AppendLine(instruction);
+            }
+
+            var prompt = sb.ToString();
+            if (string.IsNullOrWhiteSpace(prompt)) prompt = "Implémente la fonctionnalité demandée.";
+
+            var result = await _ollama.GenerateAsync(prompt);
+
+            return new AgentMessage(Descriptor.Id, Descriptor.Role, result ?? string.Empty, DateTime.UtcNow);
+        }
     }
 }

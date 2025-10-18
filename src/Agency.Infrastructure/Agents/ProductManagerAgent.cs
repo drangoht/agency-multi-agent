@@ -1,16 +1,16 @@
-using Agency.Application.Interfaces;
-using Agency.Domain.Models;
-namespace Agency.Infrastructure.Agents;
-public class ProductManagerAgent : AgentBase
+using Agency.Infrastructure.Agents;
+using Application.Interfaces;
+
+namespace Agency.Infrastructure.Agents
 {
-    public ProductManagerAgent(string id = "pm") : base(id, "ProductManager") {}
-    public override Task<AgentMessage?> HandleAsync(IEnumerable<AgentMessage> conversation, string? instruction = null, CancellationToken cancellationToken = default)
+    public class ProductManagerAgent : LLMAgentBase
     {
-        // Decides a feature breakdown and delegates to developer
-        var content = instruction is null
-            ? "Product manager defines the scope: create a small feature - hello world endpoint and tests."
-            : $"Product manager refines: {instruction}";
-        var msg = new AgentMessage(Descriptor.Id, Descriptor.Role, content, DateTime.UtcNow);
-        return Task.FromResult<AgentMessage?>(msg);
+        protected override string SystemPrompt =>
+            "Tu es un Product Manager dans une agence web. " +
+            "Analyse les besoins, clarifie les objectifs du projet et formule des tickets clairs pour les d�veloppeurs.";
+
+        public ProductManagerAgent(IHttpClientFactory factory)
+            : base(factory, "pm", "ProductManager") { }
     }
 }
+

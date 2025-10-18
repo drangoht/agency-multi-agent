@@ -23,6 +23,15 @@ public class SimpleOrchestrator : IAgentOrchestrator
         var pmMsg = await pm.HandleAsync(Array.Empty<AgentMessage>(), initialPrompt, cancellationToken);
         if (pmMsg is not null) { _store.Add(pmMsg); }
 
+        // Optional intermediate LLM agent (role: "OllamaGuy"). Make lookup safe so orchestrator
+        // still works when the agent is not registered (tests and lightweight runs).
+        var ollama = _agents.FirstOrDefault(a => a.Descriptor.Role == "OllamaGuy");
+        if (ollama is not null)
+        {
+            var ollamaMsg = await ollama.HandleAsync(_store.GetAll(), pmMsg?.Content, cancellationToken);
+            if (ollamaMsg is not null) { _store.Add(ollamaMsg); }
+        }
+        
         // Developer responds to PM
         var dev = _agents.First(a => a.Descriptor.Role == "Developer");
         var devMsg = await dev.HandleAsync(_store.GetAll(), pmMsg?.Content, cancellationToken);
