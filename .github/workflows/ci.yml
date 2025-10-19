@@ -37,7 +37,18 @@ jobs:
       - name: Test (with coverage)
         run: |
           # Ensure coverlet writes a cobertura XML into a coverage/ folder for each test project
+          # This includes all unit tests and integration tests (fast, with mocked HTTP)
           dotnet test --no-build -c Release /p:CollectCoverage=true /p:CoverletOutput=./coverage/ /p:CoverletOutputFormat=cobertura
+
+      - name: Verify integration tests ran
+        run: |
+          # Confirm that integration tests were executed
+          if dotnet test --no-build -c Release --filter "FullyQualifiedName~Integration" --logger "console;verbosity=minimal"; then
+            echo "✓ Integration tests passed"
+          else
+            echo "✗ Integration tests failed"
+            exit 1
+          fi
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
