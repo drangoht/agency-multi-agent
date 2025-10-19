@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: ["master", "main"]
   pull_request:
-    branches: [ "master", "main" ]
+    branches: ["master", "main"]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   build:
@@ -16,7 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -32,22 +36,36 @@ jobs:
 
       - name: Test (with coverage)
         run: |
-          # write coverage into each test project's coverage folder (coverlet default behavior)
-          dotnet test --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+          # Ensure coverlet writes a cobertura XML into a coverage/ folder for each test project
+          dotnet test --no-build -c Release /p:CollectCoverage=true /p:CoverletOutput=./coverage/ /p:CoverletOutputFormat=cobertura
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: "**/coverage/*.xml"
+          files: "**/*coverage*.xml"
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: List coverage files (debug)
+        run: |
+          echo "Looking for coverage files matching *coverage*.xml..."
+          find . -name "*coverage*.xml" -type f 2>/dev/null || true
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: "**/*coverage*.xml"
 
       - name: Summarize coverage and comment on PR
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
+          # Install small utilities that may not be present on minimal runners
+          if ! command -v xmllint >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y libxml2-utils; fi
+          if ! command -v jq >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y jq; fi
           set -euo pipefail
-          files=( $(ls **/coverage/*.xml 2>/dev/null || true) )
+          files=( $(find . -name "*coverage*.xml" -type f 2>/dev/null || true) )
           if [ ${#files[@]} -eq 0 ]; then
             echo "No coverage files found"
             exit 0
