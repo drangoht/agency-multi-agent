@@ -3,7 +3,7 @@ namespace Agency.Infrastructure.Agents
     public class TesterAgent : LLMAgentBase
     {
         protected override string SystemPrompt =>
-            "Tu es un testeur QA. Rédige des tests unitaires et d’intégration pertinents pour valider les comportements du code.";
+            "You are a QA tester. Write relevant unit and integration tests to validate code behavior.";
 
         public TesterAgent(IHttpClientFactory factory)
             : base(factory, "qa", "Tester") { }

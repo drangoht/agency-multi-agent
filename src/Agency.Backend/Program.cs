@@ -1,4 +1,3 @@
-
 using Agency.Backend;
 using Agency.Application.Interfaces;
 using Agency.Application.Services;
@@ -27,11 +26,16 @@ builder.Services.AddTransient<IAgent, ReleaseManagerAgent>();
 
 // Orchestrator and CORS
 builder.Services.AddSingleton<IAgentOrchestrator, SimpleOrchestrator>();
-builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("http://localhost:5000")));
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy => 
+    policy.AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials()
+          .WithOrigins("https://localhost:64274", "http://localhost:64275")));
 
 var app = builder.Build();
 
 app.UseStaticFiles();
+app.UseCors(); // Avant le MapHub
 app.MapHub<AgentsHub>("/agentsHub");
 
 app.MapGet("/api/agents", (IAgentOrchestrator orch) => Results.Ok(orch.GetAgents()));

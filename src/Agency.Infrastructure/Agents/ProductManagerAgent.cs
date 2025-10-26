@@ -6,8 +6,8 @@ namespace Agency.Infrastructure.Agents
     public class ProductManagerAgent : LLMAgentBase
     {
         protected override string SystemPrompt =>
-            "Tu es un Product Manager dans une agence web. " +
-            "Analyse les besoins, clarifie les objectifs du projet et formule des tickets clairs pour les d�veloppeurs.";
+            "You are a Product Manager in a web agency. " +
+            "Analyze requirements, clarify project objectives and formulate clear tickets for developers.";
 
         public ProductManagerAgent(IHttpClientFactory factory)
             : base(factory, "pm", "ProductManager") { }

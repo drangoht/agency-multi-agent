@@ -24,7 +24,7 @@ namespace Agency.Infrastructure.Agents
             }
 
             var prompt = sb.ToString();
-            if (string.IsNullOrWhiteSpace(prompt)) prompt = "Implémente la fonctionnalité demandée.";
+            if (string.IsNullOrWhiteSpace(prompt)) prompt = "Implement the requested functionality.";
 
             var result = await _ollama.GenerateAsync(prompt);
 

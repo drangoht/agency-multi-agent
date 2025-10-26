@@ -37,13 +37,13 @@ namespace Agency.Infrastructure.Agents
 
                 if (!string.IsNullOrWhiteSpace(instruction))
                 {
-                    sb.AppendLine($"Instruction : {instruction}");
+                    sb.AppendLine($"Instruction: {instruction}");
                 }
 
                 if (conversation != null)
                 {
                     sb.AppendLine();
-                    sb.AppendLine("Contexte :");
+                    sb.AppendLine("Context:");
                     foreach (var msg in conversation.Skip(Math.Max(0, conversation.Count() - 12)))
                     {
                         sb.AppendLine($"{msg.Role} ({msg.From}): {msg.Content}");
@@ -70,7 +70,7 @@ namespace Agency.Infrastructure.Agents
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 var text = ParseOllamaResponse(json);
                 if (string.IsNullOrWhiteSpace(text))
-                    text = "[LLMAgentBase] Réponse vide.";
+                    text = "[LLMAgentBase] Empty response.";
 
                 return new AgentMessage(Descriptor.Id, Descriptor.Role, text, DateTime.UtcNow);
             }

@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Agency Multi-Agent Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <style>
+      body{font-family:Segoe UI,Arial;padding:20px}
+      #conversation{border:1px solid #ddd;padding:10px;height:300px;overflow:auto}
+      .msg{margin:6px 0;padding:6px;border-radius:6px;background:#f3f3f3}
+      .role{font-weight:700}
+    </style>
+  </head>
+  <body>
+    <h1>Agency Multi-Agent Hierarchy</h1>
+    <p>Entrer le prompt initial :</p>
+    <input id="prompt" style="width:60%"/>
+    <button id="start">Start</button>
+    <h2>Conversation</h2>
+    <div id="conversation"></div>
+    <script>
+      const conn = new signalR.HubConnectionBuilder().withUrl('/agentsHub').build();
+      conn.on('ConversationUpdated', (conv) => {
+        const el = document.getElementById('conversation');
+        el.innerHTML = '';
+        conv.forEach(m => {
+          const d = new Date(m.timestamp);
+          const div = document.createElement('div'); div.className='msg';
+          div.innerHTML = `<div class="role">${m.role} (${m.from}) — ${d.toLocaleString()}</div><div>${m.content}</div>`;
+          el.appendChild(div);
+        });
+      });
+      conn.start().then(()=>console.log('connected')).catch(e=>console.error(e));
+      document.getElementById('start').addEventListener('click', async ()=> {
+        const p = document.getElementById('prompt').value;
+        await conn.invoke('StartConversation', p);
+      });
+      // Fetch existing conversation periodically
+      async function refresh(){
+        const res = await fetch('/api/conversation');
+        if(res.ok){
+          const conv = await res.json();
+          const ev = new Event('ConversationUpdated');
+          conn.invoke('SendMessageToClient', 'noop').catch(()=>{});
+        }
+      }
+    </script>
+  </body>
+</html>
