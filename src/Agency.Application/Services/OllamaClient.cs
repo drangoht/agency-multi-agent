@@ -36,9 +36,16 @@ namespace Application.Services
             try
             {
                 var response = await _httpClient.PostAsync(_settings.BaseUrl, content);
-                response.EnsureSuccessStatusCode();
 
+                // Lire le corps de la réponse pour le logger, puis vérifier le statut.
                 var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Appel Ollama échoué : {StatusCode}. Réponse: {ResponseBody}", response.StatusCode, jsonResponse);
+                    response.EnsureSuccessStatusCode(); // lance l'exception après logging
+                }
+
                 using var doc = JsonDocument.Parse(jsonResponse);
 
                 if (doc.RootElement.TryGetProperty("response", out var result))
